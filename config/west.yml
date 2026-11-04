@@ -17,7 +17,7 @@ manifest:
       import:
         file: app/west.yml
 
-    - name: zmk-split-esb
+    - name: zmk-feature-split-esb
       remote: kumbung01
       revision: f7b1bd15bfc5e96f3301f328efb2a0df16918b98
       clone-depth: 1
