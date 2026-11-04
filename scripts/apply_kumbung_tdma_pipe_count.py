@@ -52,15 +52,39 @@ def patch_source(path: Path) -> None:
     path.write_text(text.replace(SOURCE_OLD, SOURCE_NEW, 1), encoding="utf-8")
 
 
+ZEPHYR_KCONFIG_SYMBOL = "config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_BASIC"
+ZEPHYR_KCONFIG_OLD = """config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_BASIC
+\\tbool
+"""
+ZEPHYR_KCONFIG_NEW = """config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_BASIC
+\\tbool
+\\tselect PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY
+"""
+
+
+def patch_zephyr_kconfig(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    if ZEPHYR_KCONFIG_SYMBOL not in text:
+        raise RuntimeError(f"{path}: expected {ZEPHYR_KCONFIG_SYMBOL!r} symbol")
+    if "select PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY" in text:
+        return
+    if text.count(ZEPHYR_KCONFIG_OLD) != 1:
+        raise RuntimeError(f"{path}: expected exactly one ECC key-pair Kconfig block")
+    path.write_text(text.replace(ZEPHYR_KCONFIG_OLD, ZEPHYR_KCONFIG_NEW, 1), encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("sdk_nrf_root", type=Path, help="West checkout path of sdk-nrf")
+    parser.add_argument("zephyr_root", type=Path, help="West checkout path of Zephyr")
     args = parser.parse_args()
 
     root = args.sdk_nrf_root
+    zephyr_root = args.zephyr_root
     kconfig = root / "subsys" / "esb" / "Kconfig"
     source = root / "subsys" / "esb" / "esb.c"
-    for path in (kconfig, source):
+    psa_kconfig = zephyr_root / "modules" / "mbedtls" / "Kconfig.psa.logic"
+    for path in (kconfig, source, psa_kconfig):
         if not path.is_file():
             print(f"error: expected Kumbung SDK source file not found: {path}", file=sys.stderr)
             return 2
@@ -68,6 +92,7 @@ def main() -> int:
     try:
         patch_kconfig(kconfig)
         patch_source(source)
+        patch_zephyr_kconfig(psa_kconfig)
     except (OSError, RuntimeError) as exc:
         print(f"error: failed to apply Kumbung TDMA pipe-count patch: {exc}", file=sys.stderr)
         return 1
@@ -75,6 +100,7 @@ def main() -> int:
     print("Applied/verified Kumbung TDMA pipe-count separation:")
     print(f"  {kconfig}")
     print(f"  {source}")
+    print(f"  {psa_kconfig}")
     return 0
 
 

@@ -126,7 +126,7 @@ jobs:
 
       - name: Patch Kumbung SDK TDMA scheduler pipe count
         working-directory: ${{ env.base_dir }}
-        run: python3 "${GITHUB_WORKSPACE}/scripts/apply_kumbung_tdma_pipe_count.py" "${{ env.base_dir }}/nrf"
+        run: python3 "${GITHUB_WORKSPACE}/scripts/apply_kumbung_tdma_pipe_count.py" "${{ env.base_dir }}/nrf" "${{ env.base_dir }}/zephyr"
 
       - name: Check ZMK revision
         working-directory: ${{ env.base_dir }}

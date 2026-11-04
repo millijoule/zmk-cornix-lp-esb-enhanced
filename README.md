@@ -27,7 +27,7 @@ The configured interval is the **ESB radio service interval**, not the keyboard 
 - BLE, BLE split transport, wired split transport, and battery reporting are disabled.
 - Kumbung's whole-key-state mode remains disabled for the initial baseline.
 - Kumbung's documented requirements are met: MPSL timeslot sessions = 2, ESB max payload = 48, and system workqueue stack = 4096.
-- The build patches only the checked-out SDK source in the GitHub Actions workspace; it does not modify Kumbung's upstream repository.
+- The build applies two narrow compatibility patches in the GitHub Actions workspace: the TDMA pipe-count separation in the checked-out SDK, and the ECC public-key prerequisite selection in Zephyr's PSA Kconfig. Neither patch modifies the upstream repositories.
 
 ## Pinned dependencies
 
