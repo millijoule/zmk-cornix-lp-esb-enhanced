@@ -45,7 +45,7 @@ manifest:
 
     - name: nrfxlib
       remote: nrfconnect
-      revision: dfadf17305d8f000eda9aa74a5b9ff1c5647a23e
+      revision: 3b210a24d3bc7ecfc268e0feab6436306b11e7cb
       repo-path: sdk-nrfxlib
       path: nrfxlib
       clone-depth: 1
