@@ -28,6 +28,21 @@ manifest:
       path: nrf
       clone-depth: 1
 
+    # NCS v3.1.1 crypto modules required by sdk-nrf's nrf_security CMake.
+    - name: mbedtls
+      remote: nrfconnect
+      repo-path: sdk-mbedtls
+      revision: c5115abac477249fab42e61368b8f87c3c9265e1
+      path: modules/crypto/mbedtls
+      clone-depth: 1
+
+    - name: oberon-psa-crypto
+      remote: nrfconnect
+      repo-path: sdk-oberon-psa-crypto
+      revision: d682b30a4498ecbaa8992e909b8d8c31f4988956
+      path: modules/crypto/oberon-psa-crypto
+      clone-depth: 1
+
     - name: nrfxlib
       remote: nrfconnect
       revision: dfadf17305d8f000eda9aa74a5b9ff1c5647a23e
