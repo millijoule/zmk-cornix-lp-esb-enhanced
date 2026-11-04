@@ -1,0 +1,44 @@
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: kumbung01
+      url-base: https://github.com/kumbung01
+    - name: nrfconnect
+      url-base: https://github.com/nrfconnect
+    - name: hitsmaxft
+      url-base: https://github.com/hitsmaxft
+
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: 4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85
+      clone-depth: 1
+      import:
+        file: app/west.yml
+
+    - name: zmk-split-esb
+      remote: kumbung01
+      revision: f7b1bd15bfc5e96f3301f328efb2a0df16918b98
+      clone-depth: 1
+
+    - name: sdk-nrf
+      remote: kumbung01
+      revision: 07b7e70c0d223429c58e6cffb4e6ecaa70ff949e
+      path: nrf
+      clone-depth: 1
+
+    - name: nrfxlib
+      remote: nrfconnect
+      revision: dfadf17305d8f000eda9aa74a5b9ff1c5647a23e
+      repo-path: sdk-nrfxlib
+      path: nrfxlib
+      clone-depth: 1
+
+    - name: zmk-keyboard-cornix
+      remote: hitsmaxft
+      revision: v3.0.0
+      clone-depth: 1
+
+  self:
+    path: config
