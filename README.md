@@ -40,7 +40,7 @@ All moving branches are pinned to exact revisions in `config/west.yml`:
 | Kumbung nRF Connect SDK | `07b7e70c0d223429c58e6cffb4e6ecaa70ff949e` |
 | mbedtls | `c5115abac477249fab42e61368b8f87c3c9265e1` |
 | oberon-psa-crypto | `d682b30a4498ecbaa8992e909b8d8c31f4988956` |
-| nrfxlib | `dfadf17305d8f000eda9aa74a5b9ff1c5647a23e` |
+| nrfxlib | `3b210a24d3bc7ecfc268e0feab6436306b11e7cb` |
 | Cornix board module | `v3.0.0` |
 
 The ZMK revision uses Zephyr 4.1.0+zmk-fixes, matching the Zephyr 4.1-based Kumbung SDK branch.
