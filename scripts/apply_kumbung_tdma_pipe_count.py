@@ -54,11 +54,11 @@ def patch_source(path: Path) -> None:
 
 ZEPHYR_KCONFIG_SYMBOL = "config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_BASIC"
 ZEPHYR_KCONFIG_OLD = """config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_BASIC
-\\tbool
+\tbool
 """
 ZEPHYR_KCONFIG_NEW = """config PSA_WANT_KEY_TYPE_ECC_KEY_PAIR_BASIC
-\\tbool
-\\tselect PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY
+\tbool
+\tselect PSA_WANT_KEY_TYPE_ECC_PUBLIC_KEY
 """
 
 
