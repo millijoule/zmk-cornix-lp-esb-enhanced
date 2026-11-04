@@ -10,21 +10,24 @@ This repository builds an ESB-only ZMK firmware set for a Cornix LP split keyboa
 
 The firmware uses Kumbung's TDMA/FHSS transport and matching custom nRF Connect SDK ESB implementation.
 
-The central is configured for a **2 kHz radio slot rate** and exactly **2 ESB pipes**:
+The central is configured for a **2 kHz global TDMA slot rate**:
 
 - `CONFIG_ESB_POLLING_RATE_2KHZ=y`
-- `CONFIG_ESB_PIPE_COUNT=2`
+- `CONFIG_ESB_TDMA_PIPE_COUNT=2`
 - `CONFIG_ZMK_SPLIT_BLE_CENTRAL_PERIPHERALS=2`
 
-The SDK computes each slot as 1,000,000 µs / 2,000 = 500 µs. The central rotates between two pipes, so each peripheral is scheduled on every second slot: nominally once every 1 ms (1 kHz per peripheral). The pipe count is deliberately set to 2; leaving the SDK default of 8 would not produce the intended two-peripheral schedule.
+At 2 kHz, one global slot is 1,000,000 µs / 2,000 = 500 µs. The central rotates between the two active TDMA pipes, so each peripheral is scheduled on every second slot: nominally once every 1 ms (1 kHz per peripheral).
 
-This is the **ESB radio service interval**, not the keyboard matrix scan rate and not the USB HID polling interval. The firmware configuration targets the stated timing; actual radio delivery can still be affected by synchronization, retransmissions, and RF conditions.
+**Why the separate TDMA pipe setting exists:** Kumbung's ESB transport registers an eight-byte address-prefix table during initialization. The SDK's `CONFIG_ESB_PIPE_COUNT` controls that physical ESB pipe capacity and must remain 8 for that table. The unmodified SDK also uses that capacity as the TDMA scheduling count, which would create eight 500 µs slots and would not give the two active halves the intended 1 kHz interval. The build therefore applies the small, reproducible patch in `scripts/apply_kumbung_tdma_pipe_count.py`: physical pipe capacity remains 8, while `CONFIG_ESB_TDMA_PIPE_COUNT=2` sets the central scheduler and is communicated to the peripherals during synchronization.
+
+The configured interval is the **ESB radio service interval**, not the keyboard matrix scan rate and not the USB HID polling interval. The firmware configuration targets the nominal timing; actual radio delivery can still be affected by synchronization, retransmissions, and RF conditions.
 
 ## Other configuration
 
 - BLE, BLE split transport, wired split transport, and battery reporting are disabled.
-- Kumbung's whole-key-state mode remains at its upstream default (disabled) for the initial baseline.
+- Kumbung's whole-key-state mode remains disabled for the initial baseline.
 - Kumbung's documented requirements are met: MPSL timeslot sessions = 2, ESB max payload = 48, and system workqueue stack = 4096.
+- The build patches only the checked-out SDK source in the GitHub Actions workspace; it does not modify Kumbung's upstream repository.
 
 ## Pinned dependencies
 

@@ -9,6 +9,7 @@ on:
       - "config/**"
       - "zephyr/**"
       - "build.yaml"
+      - "scripts/**"
       - ".github/workflows/build.yml"
   pull_request:
   workflow_dispatch:
@@ -122,6 +123,10 @@ jobs:
       - name: West Update
         working-directory: ${{ env.base_dir }}
         run: west update --fetch-opt=--filter=tree:0
+
+      - name: Patch Kumbung SDK TDMA scheduler pipe count
+        working-directory: ${{ env.base_dir }}
+        run: python3 "${GITHUB_WORKSPACE}/scripts/apply_kumbung_tdma_pipe_count.py" "${{ env.base_dir }}/nrf"
 
       - name: Check ZMK revision
         working-directory: ${{ env.base_dir }}
