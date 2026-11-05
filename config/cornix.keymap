@@ -63,7 +63,16 @@
 
     conditional_layers { compatible = "zmk,conditional-layers"; };
 
-    combos { compatible = "zmk,combos"; };
+    combos {
+        compatible = "zmk,combos";
+
+        sys_reset {
+            bindings = <&sys_reset>;
+            key-positions = <0 31 11 30>;
+            require-prior-idle-ms = <500>;
+            timeout-ms = <200>;
+        };
+    };
 
     keymap {
         compatible = "zmk,keymap";
@@ -71,23 +80,23 @@
         default_layer {
             display-name = "Base";
             bindings = <
-&kp TAB     &kp Q  &kp W  &kp E     &kp R      &kp T                                  &kp Y    &kp U      &kp I       &kp O    &kp P               &kp BACKSPACE
-&kp LSHIFT  &kp A  &kp S  &kp D     &kp F      &kp G                                  &kp H    &kp J      &kp K       &kp L    &ht APOS SEMICOLON  &kp ENTER
-&kp LCTRL   &kp Z  &kp X  &kp C     &kp V      &kp B     &lt 1 C_MUTE  &kp LG(LC(V))  &kp N    &kp M      &kp COMMA   &kp DOT  &kp SLASH           &kp RSHIFT
-&none       &none  &none  &Lgui_td  &kp SPACE  &Lalt_td                               &lt 1 B  &kp SPACE  &lt 2 RALT  &none    &none               &none
+&kp TAB     &kp Q  &kp W  &kp E     &kp R      &kp T                                &kp Y    &kp U      &kp I       &kp O    &kp P               &kp BACKSPACE
+&kp LSHIFT  &kp A  &kp S  &kp D     &kp F      &kp G                                &kp H    &kp J      &kp K       &kp L    &ht APOS SEMICOLON  &kp ENTER
+&kp LCTRL   &kp Z  &kp X  &kp C     &kp V      &kp B     &kp LG(LC(V))  &kp C_MUTE  &kp N    &kp M      &kp COMMA   &kp DOT  &kp SLASH           &kp RSHIFT
+&none       &none  &none  &Lgui_td  &kp SPACE  &Lalt_td                             &lt 1 B  &kp SPACE  &lt 2 RALT  &none    &none               &none
             >;
 
             sensor-bindings =
-                <&inc_dec_kp C_VOL_UP C_VOL_DN>,
-                <&inc_dec_kp (LC(TAB)) LC(LS(TAB))>;
+                <&inc_dec_kp (LC(TAB)) LC(LS(TAB))>,
+                <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
 
         sym_num_layer {
             bindings = <
-&none       &kp EXCLAMATION  &kp AT_SIGN   &kp POUND             &none                  &none                &kp LEFT_BRACKET  &kp RIGHT_BRACKET  &kp N7  &kp N8  &kp N9  &trans
-&kp LSHIFT  &kp DOLLAR       &kp PERCENT   &kp CARET             &none                  &none                &kp MINUS         &kp EQUAL          &kp N4  &kp N5  &kp N6  &kp BACKSLASH
-&none       &kp AMPERSAND    &kp ASTERISK  &kp LEFT_PARENTHESIS  &kp RIGHT_PARENTHESIS  &none  &none  &none  &kp DOT           &kp N0             &kp N1  &kp N2  &kp N3  &kp RSHFT
-&none       &none            &none         &none                 &kp SPACE              &none                &none             &kp SPACE          &none   &none   &none   &none
+&none       &kp EXCLAMATION  &kp AT_SIGN   &kp POUND             &none                  &none                &kp LEFT_BRACKET  &kp RIGHT_BRACKET  &kp N7       &kp N8  &kp N9  &trans
+&kp LSHIFT  &kp DOLLAR       &kp PERCENT   &kp CARET             &none                  &none                &kp MINUS         &kp EQUAL          &kp N4       &kp N5  &kp N6  &kp BACKSLASH
+&none       &kp AMPERSAND    &kp ASTERISK  &kp LEFT_PARENTHESIS  &kp RIGHT_PARENTHESIS  &none  &none  &none  &kp DOT           &kp N0             &kp N1       &kp N2  &kp N3  &kp RSHFT
+&none       &none            &none         &none                 &trans                 &none                &none             &kp LC(LS(TAB))    &kp LC(TAB)  &none   &none   &none
             >;
 
             label = "Sym/Num";
@@ -95,26 +104,13 @@
 
         fn_macro_layer {
             bindings = <
-&kp ESC    &kp F1  &kp F2   &kp F3   &kp F4   &none                &none  &none  &kp RSHIFT  &none     &none     &kp DEL
-&kp TILDE  &kp F5  &kp F6   &kp F7   &kp F8   &none                &none  &none  &none       &kp HOME  &kp UP    &kp END
-&kp GRAVE  &kp F9  &kp F10  &kp F11  &kp F12  &none  &none  &none  &none  &none  &none       &kp LEFT  &kp DOWN  &kp RIGHT
-&none      &none   &none    &none    &none    &none                &none  &none  &none       &none     &none     &none
+&kp ESC    &kp F1  &kp F2   &kp F3   &kp F4   &none                &none      &none          &kp RSHIFT  &none     &none     &kp DEL
+&kp TILDE  &kp F5  &kp F6   &kp F7   &kp F8   &none                &none      &none          &none       &kp HOME  &kp UP    &kp END
+&kp GRAVE  &kp F9  &kp F10  &kp F11  &kp F12  &none  &none  &none  &none      &none          &none       &kp LEFT  &kp DOWN  &kp RIGHT
+&none      &none   &none    &none    &none    &none                &kp LC(W)  &kp LC(LS(T))  &none       &none     &none     &none
             >;
 
             label = "Fn/Macro";
-            sensor-bindings =
-                <&inc_dec_kp C_AC_SCROLL_UP C_AC_SCROLL_DOWN>,
-                <&inc_dec_kp (LC(LS(T))) LC(W)>;
-        };
-
-        Debug_layer {
-            display-name = "Debug";
-            bindings = <
-&none  &none  &none  &none  &none  &none                &none  &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none  &none                &none  &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none  &none  &none  &none  &none  &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none  &none                &none  &none  &none  &none  &none  &none
-            >;
         };
     };
 };
