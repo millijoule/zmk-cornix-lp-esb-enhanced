@@ -130,7 +130,7 @@ jobs:
 
       - name: Patch ESB battery event and dongle display support
         working-directory: ${{ env.base_dir }}
-        run: python3 "${GITHUB_WORKSPACE}/scripts/apply_esb_battery_support.py" "${{ env.base_dir }}/zmk/app" "${{ env.base_dir }}/zmk-dongle-display"
+        run: python3 "${GITHUB_WORKSPACE}/scripts/apply_esb_battery_support.py" "${{ env.base_dir }}/zmk/app" "${{ env.base_dir }}/zmk-dongle-display" "${{ env.base_dir }}/zmk-feature-split-esb"
 
       - name: Check ZMK revision
         working-directory: ${{ env.base_dir }}
