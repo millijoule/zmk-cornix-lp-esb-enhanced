@@ -58,6 +58,15 @@ def patch_zmk_central_count(zmk_root: Path) -> None:
     replace_once(path, old, new)
 
 
+def patch_zmk_battery_event_cmake(zmk_root: Path) -> None:
+    path = zmk_root / "CMakeLists.txt"
+    old = "target_sources_ifdef(CONFIG_ZMK_BATTERY_REPORTING app PRIVATE src/events/battery_state_changed.c)"
+    new = """if(CONFIG_ZMK_BATTERY_REPORTING OR CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING)
+    target_sources(app PRIVATE src/events/battery_state_changed.c)
+endif()"""
+    replace_once(path, old, new)
+
+
 def patch_display_module(display_root: Path) -> None:
     shield = display_root / "boards" / "shields" / "dongle_display"
 
@@ -163,6 +172,7 @@ def main() -> int:
 
     required = [
         args.zmk_root / "include" / "zmk" / "split" / "central.h",
+        args.zmk_root / "CMakeLists.txt",
         args.display_module_root / "boards" / "shields" / "dongle_display" / "CMakeLists.txt",
         args.display_module_root
         / "boards"
@@ -183,6 +193,7 @@ def main() -> int:
 
     try:
         patch_zmk_central_count(args.zmk_root)
+        patch_zmk_battery_event_cmake(args.zmk_root)
         patch_display_module(args.display_module_root)
     except (OSError, RuntimeError) as exc:
         print(f"error: failed to apply ESB battery/display patch: {exc}", file=sys.stderr)
