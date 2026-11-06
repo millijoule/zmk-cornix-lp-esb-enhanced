@@ -527,6 +527,19 @@ void zmk_esb_diag_note_usb_result(int err) {
         '        LOG_WRN("ESB_EVENT_TX_FAILED");',
     )
 
+
+    app_esb = esb_root / "src" / "split" / "esb" / "app_esb.c"
+    replace_once(
+        app_esb,
+        """    if (esb_tx_start(pipe, data_size + 2) == -ENOMEM) {
+        return -ENOMEM;
+    }""",
+        """    int err = esb_tx_start(pipe, data_size + 2);
+    if (err != 0) {
+        return err;
+    }""",
+    )
+
     common = esb_root / "src" / "split" / "esb" / "common.c"
     replace_once(
         common,
@@ -549,14 +562,47 @@ void zmk_esb_diag_note_usb_result(int err) {
     peripheral = esb_root / "src" / "split" / "esb" / "peripheral.c"
     replace_once(
         peripheral,
+        "static struct peripheral_slot_context slot;\n",
+        "static struct peripheral_slot_context slot;\nstatic bool key_state_retry_pending;\n",
+    )
+    replace_once(
+        peripheral,
         "        ret = send_data(PERIPHERAL_ID, event->type, slot.position_state);\n",
         "        ret = send_data(PERIPHERAL_ID, event->type, slot.position_state);\n"
-        "        zmk_esb_diag_note_key_tx(ret);\n",
+        "        zmk_esb_diag_note_key_tx(ret);\n"
+        "        if (ret == -ENOMEM) {\n"
+        "            key_state_retry_pending = true;\n"
+        "            if (is_central_connected) {\n"
+        "                k_work_reschedule(&key_state_retry_work, K_MSEC(2));\n"
+        "            }\n"
+        "        }\n",
     )
     replace_once(
         peripheral,
         "bool is_central_connected = false;\n",
         """bool is_central_connected = false;
+
+static void key_state_retry_work_handler(struct k_work *work);
+K_WORK_DELAYABLE_DEFINE(key_state_retry_work, key_state_retry_work_handler);
+
+static void key_state_retry_work_handler(struct k_work *work) {
+    if (!is_central_connected || !key_state_retry_pending) {
+        return;
+    }
+
+    int ret = send_data(PERIPHERAL_ID,
+                        ZMK_SPLIT_TRANSPORT_PERIPHERAL_EVENT_TYPE_KEY_POSITION_EVENT,
+                        slot.position_state);
+    zmk_esb_diag_note_key_tx(ret);
+    if (ret == -ENOMEM) {
+        k_work_reschedule(&key_state_retry_work, K_MSEC(2));
+    } else {
+        key_state_retry_pending = false;
+        if (ret != 0) {
+            LOG_WRN("ESB key-state retry failed: %d", ret);
+        }
+    }
+}
 
 static void peripheral_diag_report_work_handler(struct k_work *work);
 K_WORK_DELAYABLE_DEFINE(peripheral_diag_report_work, peripheral_diag_report_work_handler);
@@ -584,9 +630,19 @@ static void peripheral_diag_report_work_handler(struct k_work *work) {
     )
     replace_once(
         peripheral,
+        "    k_work_reschedule(&peripheral_diag_report_work, K_SECONDS(1));\n",
+        "    k_work_reschedule(&peripheral_diag_report_work, K_SECONDS(1));\n"
+        "    if (key_state_retry_pending) {\n"
+        "        k_work_reschedule(&key_state_retry_work, K_NO_WAIT);\n"
+        "    }\n",
+    )
+    replace_once(
+        peripheral,
         "    is_central_connected = false;\n",
         "    is_central_connected = false;\n"
         "    k_work_cancel_delayable(&peripheral_diag_report_work);\n",
+        "    k_work_cancel_delayable(&peripheral_diag_report_work);\n"
+        "    k_work_cancel_delayable(&key_state_retry_work);\n",
     )
 
     central = esb_root / "src" / "split" / "esb" / "central.c"
