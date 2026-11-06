@@ -8,6 +8,8 @@ manifest:
       url-base: https://github.com/nrfconnect
     - name: hitsmaxft
       url-base: https://github.com/hitsmaxft
+    - name: englmaxi
+      url-base: https://github.com/englmaxi
 
   projects:
     - name: zmk
@@ -53,6 +55,12 @@ manifest:
     - name: zmk-keyboard-cornix
       remote: hitsmaxft
       revision: v3.0.0
+      clone-depth: 1
+
+    # OLED dongle status screen and peripheral battery widgets.
+    - name: zmk-dongle-display
+      remote: englmaxi
+      revision: 2bb333f87136d33e94a49d86236ed9ec254a8060
       clone-depth: 1
 
   self:
