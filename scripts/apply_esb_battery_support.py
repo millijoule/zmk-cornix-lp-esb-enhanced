@@ -375,8 +375,8 @@ struct zmk_esb_diag_snapshot zmk_esb_diag_get_snapshot(void) {
     )
     replace_once(
         endpoints,
-        "#include <zmk/endpoints.h>\n",
-        "#include <zmk/endpoints.h>\n#include <app_esb.h>\n",
+        "#include <zmk/hid.h>\n",
+        "#include <zmk/hid.h>\n#include <app_esb.h>\n",
     )
 
     usb_hid = zmk_root / "src" / "usb_hid.c"
