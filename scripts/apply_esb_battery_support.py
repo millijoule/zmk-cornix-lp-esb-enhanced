@@ -179,14 +179,22 @@ static void update_diag_label(lv_timer_t *timer) {
     struct zmk_esb_diag_snapshot s = zmk_esb_diag_get_snapshot();
     lv_label_set_text_fmt(
         diag_label,
-        "RF%03u RX%03u\nKP%03u EV%03u\nUSB%03u/%03u\nN%03u ERR%ld",
-        (unsigned int)(s.radio_rx % 1000),
-        (unsigned int)(s.rx_packets % 1000),
-        (unsigned int)(s.key_positions % 1000),
-        (unsigned int)(s.keycode_events % 1000),
-        (unsigned int)(s.usb_successes % 1000),
-        (unsigned int)(s.usb_attempts % 1000),
-        (unsigned int)(s.no_endpoint_reports % 1000),
+        "RF%02u RX%02u\nKP%02u EV%02u\nLA%02uQ%02uS%02uF%02u\nRA%02uQ%02uS%02uF%02u\nU%02u/%02u N%u E%ld",
+        (unsigned int)(s.radio_rx % 100),
+        (unsigned int)(s.rx_packets % 100),
+        (unsigned int)(s.key_positions % 100),
+        (unsigned int)(s.keycode_events % 100),
+        (unsigned int)(s.remote[0].key_tx_attempts % 100),
+        (unsigned int)(s.remote[0].key_tx_queue_errors % 100),
+        (unsigned int)(s.remote[0].tx_successes % 100),
+        (unsigned int)(s.remote[0].tx_failures % 100),
+        (unsigned int)(s.remote[1].key_tx_attempts % 100),
+        (unsigned int)(s.remote[1].key_tx_queue_errors % 100),
+        (unsigned int)(s.remote[1].tx_successes % 100),
+        (unsigned int)(s.remote[1].tx_failures % 100),
+        (unsigned int)(s.usb_successes % 100),
+        (unsigned int)(s.usb_attempts % 100),
+        (unsigned int)(s.no_endpoint_reports % 10),
         (long)s.usb_last_error
     );
 }
@@ -222,8 +230,8 @@ lv_obj_t *zmk_display_status_screen(void) {
 #endif
 
     diag_label = lv_label_create(screen);
-    lv_obj_set_pos(diag_label, 2, 27);
-    lv_obj_set_size(diag_label, 124, 37);
+    lv_obj_set_pos(diag_label, 2, 22);
+    lv_obj_set_size(diag_label, 124, 42);
     lv_label_set_long_mode(diag_label, LV_LABEL_LONG_CLIP);
     lv_obj_add_style(diag_label, &global_style, LV_PART_MAIN);
     update_diag_label(NULL);
@@ -405,6 +413,205 @@ struct zmk_esb_diag_snapshot zmk_esb_diag_get_snapshot(void) {
 
 
 
+
+def patch_peripheral_diagnostics(esb_root: Path) -> None:
+    """Report peripheral key-send queue and radio TX outcomes to the dongle."""
+    header = esb_root / "include" / "app_esb.h"
+    if "ZMK_SPLIT_ESB_DIAG_EVENT_TYPE" not in header.read_text(encoding="utf-8"):
+        replace_once(
+            header,
+            "struct zmk_esb_diag_snapshot {\n",
+            """#define ZMK_SPLIT_ESB_DIAG_EVENT_TYPE 0x7e
+
+struct zmk_esb_peripheral_diag {
+    uint16_t key_tx_attempts;
+    uint16_t key_tx_queue_errors;
+    uint16_t tx_successes;
+    uint16_t tx_failures;
+} __packed;
+
+struct zmk_esb_diag_snapshot {
+""",
+        )
+        replace_once(
+            header,
+            "    int32_t usb_last_error;\n};\n",
+            """    int32_t usb_last_error;
+    struct zmk_esb_peripheral_diag remote[2];
+};
+""",
+        )
+        replace_once(
+            header,
+            "struct zmk_esb_diag_snapshot zmk_esb_diag_get_snapshot(void);\n",
+            """struct zmk_esb_diag_snapshot zmk_esb_diag_get_snapshot(void);
+void zmk_esb_diag_note_key_tx(int err);
+void zmk_esb_diag_note_tx_result(int err);
+void zmk_esb_diag_get_local_peripheral(struct zmk_esb_peripheral_diag *out);
+void zmk_esb_diag_update_peripheral(uint8_t source,
+                                    const struct zmk_esb_peripheral_diag *diag);
+""",
+        )
+
+    app_esb = esb_root / "src" / "split" / "esb" / "app_esb.c"
+    replace_once(
+        app_esb,
+        "static atomic_t diag_usb_last_error;\n",
+        """static atomic_t diag_usb_last_error;
+static atomic_t diag_peripheral_key_tx_attempts;
+static atomic_t diag_peripheral_key_tx_queue_errors;
+static atomic_t diag_peripheral_tx_successes;
+static atomic_t diag_peripheral_tx_failures;
+static struct zmk_esb_peripheral_diag diag_remote[2];
+""",
+    )
+    replace_once(
+        app_esb,
+        "void zmk_esb_diag_note_usb_result(int err) {\n",
+        """void zmk_esb_diag_note_key_tx(int err) {
+    atomic_inc(&diag_peripheral_key_tx_attempts);
+    if (err != 0) {
+        atomic_inc(&diag_peripheral_key_tx_queue_errors);
+    }
+}
+
+void zmk_esb_diag_note_tx_result(int err) {
+    if (err == 0) {
+        atomic_inc(&diag_peripheral_tx_successes);
+    } else {
+        atomic_inc(&diag_peripheral_tx_failures);
+    }
+}
+
+void zmk_esb_diag_get_local_peripheral(struct zmk_esb_peripheral_diag *out) {
+    if (out == NULL) {
+        return;
+    }
+    out->key_tx_attempts = (uint16_t)atomic_get(&diag_peripheral_key_tx_attempts);
+    out->key_tx_queue_errors = (uint16_t)atomic_get(&diag_peripheral_key_tx_queue_errors);
+    out->tx_successes = (uint16_t)atomic_get(&diag_peripheral_tx_successes);
+    out->tx_failures = (uint16_t)atomic_get(&diag_peripheral_tx_failures);
+}
+
+void zmk_esb_diag_update_peripheral(uint8_t source,
+                                    const struct zmk_esb_peripheral_diag *diag) {
+    if (diag == NULL || source >= ARRAY_SIZE(diag_remote)) {
+        return;
+    }
+    diag_remote[source] = *diag;
+}
+
+void zmk_esb_diag_note_usb_result(int err) {
+""",
+    )
+    replace_once(
+        app_esb,
+        "        .usb_last_error = (int32_t)atomic_get(&diag_usb_last_error),\n    };\n}",
+        """        .usb_last_error = (int32_t)atomic_get(&diag_usb_last_error),
+        .remote = {diag_remote[0], diag_remote[1]},
+    };
+}""",
+    )
+    replace_once(
+        app_esb,
+        '    case ESB_EVENT_TX_SUCCESS:\n        LOG_DBG("TX SUCCESS: TRY %u", event->tx.tx_attempts);',
+        '    case ESB_EVENT_TX_SUCCESS:\n'
+        '        zmk_esb_diag_note_tx_result(0);\n'
+        '        LOG_DBG("TX SUCCESS: TRY %u", event->tx.tx_attempts);',
+    )
+    replace_once(
+        app_esb,
+        '    case ESB_EVENT_TX_FAILED:\n        LOG_WRN("ESB_EVENT_TX_FAILED");',
+        '    case ESB_EVENT_TX_FAILED:\n'
+        '        zmk_esb_diag_note_tx_result(-EIO);\n'
+        '        LOG_WRN("ESB_EVENT_TX_FAILED");',
+    )
+
+    common = esb_root / "src" / "split" / "esb" / "common.c"
+    replace_once(
+        common,
+        '#include "common.h"\n',
+        '#include "common.h"\n#include "app_esb.h"\n',
+    )
+    replace_once(
+        common,
+        "    case ZMK_SPLIT_TRANSPORT_PERIPHERAL_EVENT_TYPE_BATTERY_EVENT:\n"
+        "        size = sizeof(((struct zmk_split_transport_peripheral_event *)0)->data.battery_event);\n"
+        "        break;\n",
+        "    case ZMK_SPLIT_TRANSPORT_PERIPHERAL_EVENT_TYPE_BATTERY_EVENT:\n"
+        "        size = sizeof(((struct zmk_split_transport_peripheral_event *)0)->data.battery_event);\n"
+        "        break;\n"
+        "    case ZMK_SPLIT_ESB_DIAG_EVENT_TYPE:\n"
+        "        size = sizeof(struct zmk_esb_peripheral_diag);\n"
+        "        break;\n",
+    )
+
+    peripheral = esb_root / "src" / "split" / "esb" / "peripheral.c"
+    replace_once(
+        peripheral,
+        "        ret = send_data(PERIPHERAL_ID, event->type, slot.position_state);\n",
+        "        ret = send_data(PERIPHERAL_ID, event->type, slot.position_state);\n"
+        "        zmk_esb_diag_note_key_tx(ret);\n",
+    )
+    replace_once(
+        peripheral,
+        "bool is_central_connected = false;\n",
+        """bool is_central_connected = false;
+
+static void peripheral_diag_report_work_handler(struct k_work *work) {
+    if (!is_central_connected) {
+        return;
+    }
+
+    struct zmk_esb_peripheral_diag diag;
+    zmk_esb_diag_get_local_peripheral(&diag);
+    int ret = send_data(PERIPHERAL_ID, ZMK_SPLIT_ESB_DIAG_EVENT_TYPE, &diag);
+    if (ret != 0) {
+        LOG_DBG("ESB diagnostic report enqueue failed: %d", ret);
+    }
+    k_work_reschedule(&peripheral_diag_report_work, K_SECONDS(1));
+}
+K_WORK_DELAYABLE_DEFINE(peripheral_diag_report_work, peripheral_diag_report_work_handler);
+""",
+    )
+    replace_once(
+        peripheral,
+        "    k_work_reschedule(&battery_report_work, K_NO_WAIT);\n",
+        "    k_work_reschedule(&battery_report_work, K_NO_WAIT);\n"
+        "    k_work_reschedule(&peripheral_diag_report_work, K_SECONDS(1));\n",
+    )
+    replace_once(
+        peripheral,
+        "    is_central_connected = false;\n",
+        "    is_central_connected = false;\n"
+        "    k_work_cancel_delayable(&peripheral_diag_report_work);\n",
+    )
+
+    central = esb_root / "src" / "split" / "esb" / "central.c"
+    replace_once(
+        central,
+        "    case ZMK_SPLIT_TRANSPORT_PERIPHERAL_EVENT_TYPE_BATTERY_EVENT:\n"
+        "        memcpy(&evt.data, &data[1], data_size);\n"
+        "        if (zmk_split_transport_central_peripheral_event_handler(&esb_central, source, evt) ==\n"
+        "            -EINVAL) {\n"
+        "            k_work_submit(&notify_status_work);\n"
+        "        }\n"
+        "        break;\n",
+        "    case ZMK_SPLIT_TRANSPORT_PERIPHERAL_EVENT_TYPE_BATTERY_EVENT:\n"
+        "        memcpy(&evt.data, &data[1], data_size);\n"
+        "        if (zmk_split_transport_central_peripheral_event_handler(&esb_central, source, evt) ==\n"
+        "            -EINVAL) {\n"
+        "            k_work_submit(&notify_status_work);\n"
+        "        }\n"
+        "        break;\n"
+        "    case ZMK_SPLIT_ESB_DIAG_EVENT_TYPE: {\n"
+        "        struct zmk_esb_peripheral_diag diag;\n"
+        "        memcpy(&diag, &data[1], sizeof(diag));\n"
+        "        zmk_esb_diag_update_peripheral(source, &diag);\n"
+        "        break;\n"
+        "    }\n",
+    )
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("zmk_root", type=Path, help="West checkout path of ZMK")
@@ -437,6 +644,7 @@ def main() -> int:
         patch_zmk_battery_event_cmake(args.zmk_root)
         patch_display_module(args.display_module_root)
         patch_esb_diagnostics(args.zmk_root, args.esb_module_root)
+        patch_peripheral_diagnostics(args.esb_module_root)
     except (OSError, RuntimeError) as exc:
         print(f"error: failed to apply ESB battery/display patch: {exc}", file=sys.stderr)
         return 1
