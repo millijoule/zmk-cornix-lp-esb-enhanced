@@ -128,6 +128,10 @@ jobs:
         working-directory: ${{ env.base_dir }}
         run: python3 "${GITHUB_WORKSPACE}/scripts/apply_kumbung_tdma_pipe_count.py" "${{ env.base_dir }}/nrf" "${{ env.base_dir }}/zephyr"
 
+      - name: Patch ESB battery event and dongle display support
+        working-directory: ${{ env.base_dir }}
+        run: python3 "${GITHUB_WORKSPACE}/scripts/apply_esb_battery_support.py" "${{ env.base_dir }}/zmk/app" "${{ env.base_dir }}/zmk-dongle-display"
+
       - name: Check ZMK revision
         working-directory: ${{ env.base_dir }}
         run: |
