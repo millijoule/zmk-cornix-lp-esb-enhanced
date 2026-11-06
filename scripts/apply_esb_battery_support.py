@@ -179,14 +179,14 @@ static void update_diag_label(lv_timer_t *timer) {
     struct zmk_esb_diag_snapshot s = zmk_esb_diag_get_snapshot();
     lv_label_set_text_fmt(
         diag_label,
-        "RF %lu RX %lu KP %lu\nEV %lu USB %lu/%lu N %lu E %ld",
-        (unsigned long)s.radio_rx,
-        (unsigned long)s.rx_packets,
-        (unsigned long)s.key_positions,
-        (unsigned long)s.keycode_events,
-        (unsigned long)s.usb_successes,
-        (unsigned long)s.usb_attempts,
-        (unsigned long)s.no_endpoint_reports,
+        "RF%03u RX%03u\nKP%03u EV%03u\nUSB%03u/%03u\nN%03u ERR%ld",
+        (unsigned int)(s.radio_rx % 1000),
+        (unsigned int)(s.rx_packets % 1000),
+        (unsigned int)(s.key_positions % 1000),
+        (unsigned int)(s.keycode_events % 1000),
+        (unsigned int)(s.usb_successes % 1000),
+        (unsigned int)(s.usb_attempts % 1000),
+        (unsigned int)(s.no_endpoint_reports % 1000),
         (long)s.usb_last_error
     );
 }
@@ -222,7 +222,9 @@ lv_obj_t *zmk_display_status_screen(void) {
 #endif
 
     diag_label = lv_label_create(screen);
-    lv_obj_set_pos(diag_label, 4, 48);
+    lv_obj_set_pos(diag_label, 2, 27);
+    lv_obj_set_size(diag_label, 124, 37);
+    lv_label_set_long_mode(diag_label, LV_LABEL_LONG_CLIP);
     lv_obj_add_style(diag_label, &global_style, LV_PART_MAIN);
     update_diag_label(NULL);
     lv_timer_create(update_diag_label, 250, NULL);
