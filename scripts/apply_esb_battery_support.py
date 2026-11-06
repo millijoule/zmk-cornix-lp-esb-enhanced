@@ -563,7 +563,11 @@ void zmk_esb_diag_note_usb_result(int err) {
     replace_once(
         peripheral,
         "static struct peripheral_slot_context slot;\n",
-        "static struct peripheral_slot_context slot;\nstatic bool key_state_retry_pending;\n",
+        "static struct peripheral_slot_context slot;\n"
+        "static bool key_state_retry_pending;\n"
+        "extern bool is_central_connected;\n"
+        "static void key_state_retry_work_handler(struct k_work *work);\n"
+        "K_WORK_DELAYABLE_DEFINE(key_state_retry_work, key_state_retry_work_handler);\n",
     )
     replace_once(
         peripheral,
@@ -581,9 +585,6 @@ void zmk_esb_diag_note_usb_result(int err) {
         peripheral,
         "bool is_central_connected = false;\n",
         """bool is_central_connected = false;
-
-static void key_state_retry_work_handler(struct k_work *work);
-K_WORK_DELAYABLE_DEFINE(key_state_retry_work, key_state_retry_work_handler);
 
 static void key_state_retry_work_handler(struct k_work *work) {
     if (!is_central_connected || !key_state_retry_pending) {
@@ -626,11 +627,6 @@ static void peripheral_diag_report_work_handler(struct k_work *work) {
         peripheral,
         "    k_work_reschedule(&battery_report_work, K_NO_WAIT);\n",
         "    k_work_reschedule(&battery_report_work, K_NO_WAIT);\n"
-        "    k_work_reschedule(&peripheral_diag_report_work, K_SECONDS(1));\n",
-    )
-    replace_once(
-        peripheral,
-        "    k_work_reschedule(&peripheral_diag_report_work, K_SECONDS(1));\n",
         "    k_work_reschedule(&peripheral_diag_report_work, K_SECONDS(1));\n"
         "    if (key_state_retry_pending) {\n"
         "        k_work_reschedule(&key_state_retry_work, K_NO_WAIT);\n"
@@ -640,7 +636,6 @@ static void peripheral_diag_report_work_handler(struct k_work *work) {
         peripheral,
         "    is_central_connected = false;\n",
         "    is_central_connected = false;\n"
-        "    k_work_cancel_delayable(&peripheral_diag_report_work);\n",
         "    k_work_cancel_delayable(&peripheral_diag_report_work);\n"
         "    k_work_cancel_delayable(&key_state_retry_work);\n",
     )
