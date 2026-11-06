@@ -558,6 +558,9 @@ void zmk_esb_diag_note_usb_result(int err) {
         "bool is_central_connected = false;\n",
         """bool is_central_connected = false;
 
+static void peripheral_diag_report_work_handler(struct k_work *work);
+K_WORK_DELAYABLE_DEFINE(peripheral_diag_report_work, peripheral_diag_report_work_handler);
+
 static void peripheral_diag_report_work_handler(struct k_work *work) {
     if (!is_central_connected) {
         return;
@@ -571,7 +574,6 @@ static void peripheral_diag_report_work_handler(struct k_work *work) {
     }
     k_work_reschedule(&peripheral_diag_report_work, K_SECONDS(1));
 }
-K_WORK_DELAYABLE_DEFINE(peripheral_diag_report_work, peripheral_diag_report_work_handler);
 """,
     )
     replace_once(
