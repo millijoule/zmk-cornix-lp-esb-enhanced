@@ -230,8 +230,8 @@ lv_obj_t *zmk_display_status_screen(void) {
 #endif
 
     diag_label = lv_label_create(screen);
-    lv_obj_set_pos(diag_label, 2, 22);
-    lv_obj_set_size(diag_label, 124, 42);
+    lv_obj_set_pos(diag_label, 2, 20);
+    lv_obj_set_size(diag_label, 124, 44);
     lv_label_set_long_mode(diag_label, LV_LABEL_LONG_CLIP);
     lv_obj_add_style(diag_label, &global_style, LV_PART_MAIN);
     update_diag_label(NULL);
