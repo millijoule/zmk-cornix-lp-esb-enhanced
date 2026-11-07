@@ -132,6 +132,10 @@ jobs:
         working-directory: ${{ env.base_dir }}
         run: python3 "${GITHUB_WORKSPACE}/scripts/apply_esb_battery_display.py" "${{ env.base_dir }}/zmk" "${{ env.base_dir }}/zmk-feature-split-esb"
 
+      - name: Rotate dongle OLED for inverted mounting
+        working-directory: ${{ env.base_dir }}
+        run: python3 "${GITHUB_WORKSPACE}/scripts/apply_dongle_oled_rotation.py" "${{ env.base_dir }}/zmk-keyboard-cornix"
+
       - name: Check ZMK revision
         working-directory: ${{ env.base_dir }}
         run: |
