@@ -1,7 +1,7 @@
 ---
 include:
   - board: nice_nano//zmk
-    shield: cornix_dongle_adapter cornix_esb_link
+    shield: cornix_dongle_adapter cornix_dongle_eyelash cornix_esb_link
     snippet: nrf52840-nosd
     artifact-name: cornix_dongle_esb
 
