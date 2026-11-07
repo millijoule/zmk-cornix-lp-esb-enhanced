@@ -2,7 +2,7 @@ name: Build ZMK firmware (Kumbung TDMA/FHSS)
 
 on:
   push:
-    branches: [main]
+    branches: [main, "feature/esb-battery-minimal"]
     paths:
       - "Kconfig"
       - "boards/**"
