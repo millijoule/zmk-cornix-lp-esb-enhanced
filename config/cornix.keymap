@@ -46,7 +46,7 @@
             compatible = "zmk,behavior-tap-dance";
             label = "LALT_TD";
             #binding-cells = <0>;
-            bindings = <&kp LALT>, <&kp LGUI>, <&kp ESC>;
+            bindings = <&kp LALT>, <&kp LGUI>;
 
             tapping-term-ms = <200>;
         };
@@ -55,7 +55,7 @@
             compatible = "zmk,behavior-tap-dance";
             label = "LGUI_TD";
             #binding-cells = <0>;
-            bindings = <&mo 1>, <&mo 2>;
+            bindings = <&lt 1 ESC>, <&mo 2>;
 
             tapping-term-ms = <200>;
         };
@@ -94,10 +94,10 @@
 
         sym_num_layer {
             bindings = <
-&none       &kp EXCLAMATION  &kp AT_SIGN   &kp POUND             &none                  &none                              &kp LEFT_BRACKET  &kp RIGHT_BRACKET  &kp N7       &kp N8  &kp N9  &trans
-&kp LSHIFT  &kp DOLLAR       &kp PERCENT   &kp CARET             &none                  &none                              &kp MINUS         &kp EQUAL          &kp N4       &kp N5  &kp N6  &kp BACKSLASH
-&none       &kp AMPERSAND    &kp ASTERISK  &kp LEFT_PARENTHESIS  &kp RIGHT_PARENTHESIS  &none  &kp PSCRN  &kp PRINTSCREEN  &kp DOT           &kp N0             &kp N1       &kp N2  &kp N3  &kp RSHFT
-&none       &none            &none         &none                 &trans                 &none                              &none             &kp LC(LS(TAB))    &kp LC(TAB)  &none   &none   &none
+&none       &kp EXCLAMATION  &kp AT_SIGN   &kp POUND             &none                  &kp LG(LA(B))                              &kp LEFT_BRACKET  &kp RIGHT_BRACKET  &kp N7       &kp N8  &kp N9  &trans
+&kp LSHIFT  &kp DOLLAR       &kp PERCENT   &kp CARET             &none                  &none                                      &kp MINUS         &kp EQUAL          &kp N4       &kp N5  &kp N6  &kp BACKSLASH
+&none       &kp AMPERSAND    &kp ASTERISK  &kp LEFT_PARENTHESIS  &kp RIGHT_PARENTHESIS  &none          &kp PSCRN  &kp PRINTSCREEN  &kp DOT           &kp N0             &kp N1       &kp N2  &kp N3  &kp RSHFT
+&none       &none            &none         &none                 &trans                 &none                                      &none             &kp LC(LS(TAB))    &kp LC(TAB)  &none   &none   &none
             >;
 
             label = "Sym/Num";
