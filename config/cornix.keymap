@@ -46,16 +46,16 @@
             compatible = "zmk,behavior-tap-dance";
             label = "LALT_TD";
             #binding-cells = <0>;
-            bindings = <&ht LALT Y>, <&lt 1 ESC>;
+            bindings = <&kp LALT>, <&kp LGUI>, <&kp ESC>;
 
-            tapping-term-ms = <150>;
+            tapping-term-ms = <200>;
         };
 
         Lgui_td: Lgui_td {
             compatible = "zmk,behavior-tap-dance";
             label = "LGUI_TD";
             #binding-cells = <0>;
-            bindings = <&ht LGUI LGUI>, <&mo 2>;
+            bindings = <&mo 1>, <&mo 2>;
 
             tapping-term-ms = <200>;
         };
